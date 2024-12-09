@@ -1,19 +1,14 @@
 <template>
-  <!--自定义播放测试页面-->
+  <!-- 自定义播放测试页面 -->
   <div class="container">
-    <!--头部工具栏-->
+    <!-- 头部工具栏 -->
     <div class="player_header">
-      <!--<el-input class="player_link" placeholder="请输入视频播放地址, mp4 或 m3u8 格式">
-        <template #append>
-          <el-button :icon="Search"/>
-        </template>
-      </el-input>-->
       <div class="player_link">
         <input type="text" v-model="data.link" @keyup.enter="play" placeholder="请输入视频播放地址, mp4 或 m3u8 格式" class="cus-input">
         <button class="iconfont icon-play" @click="play" />
       </div>
     </div>
-    <!--播放器区域-->
+    <!-- 播放器区域 -->
     <div class="player_area">
       <video-player @mounted="playerMount" :src="data.options.src" :poster="posterImg" controls
                     :loop="false"
@@ -27,17 +22,17 @@
 </template>
 
 <script setup lang="ts">
-import {Search} from "@element-plus/icons-vue";
+import { Search } from "@element-plus/icons-vue";
 import posterImg from "../../assets/image/play.png";
-import {VideoPlayer} from "@videojs-player/vue";
-import {reactive} from "vue";
-import {ElMessage} from "element-plus";
+import { VideoPlayer } from "@videojs-player/vue";
+import { reactive } from "vue";
+import { ElMessage } from "element-plus";
 
 const data = reactive({
   link: '',
   options: {
-    title: "", //视频名称
-    src: "", //视频源
+    title: "", // 视频名称
+    src: "", // 视频源
     volume: 0.6, // 音量
     currentTime: 50,
   },
@@ -68,6 +63,7 @@ const handlePlay = (e: any) => {
       break
   }
 }
+
 // 主动触发快捷键
 const triggerKeyMap = (keyCode: number) => {
   let player = document.getElementsByTagName("video")[0]
@@ -77,6 +73,7 @@ const triggerKeyMap = (keyCode: number) => {
   event.keyCode = keyCode; // 设置键码
   player.dispatchEvent(event)
 }
+
 const handleBtn = (e: any) => {
   let btns = document.getElementsByClassName('vjs-button')
   for (let el of btns) {
@@ -86,34 +83,82 @@ const handleBtn = (e: any) => {
     })
   }
 }
+
 // player 加载完成事件
-const playerMount = (e:any) =>{
+const playerMount = (e: any) => {
   // 处理功能按钮相关事件
   handleBtn(e)
+  const videoElement = document.getElementsByTagName("video")[0];
+  if (videoElement) {
+    videoElement.focus(); // 确保视频元素获得焦点
+  }
 }
 
 // 播放执行
-const play = () => {
+const play = async () => {
   const pattern = /(^http[s]?:\/\/[^\s]+\.m3u8$)|(^http[s]?:\/\/[^\s]+\.mp4$)/
   if (!pattern.test(data.link)) {
-    ElMessage.error({message: '视频链接格式异常, 请输入正确的播放链接!!!'})
+    ElMessage.error({ message: '视频链接格式异常, 请输入正确的播放链接!!!' })
     return
   }
-  // 同步 link 为 player src
-  data.options.src = data.link
-  // 执行播放器播放
-  document.getElementsByTagName("video")[0].play()
-}
 
+  try {
+    console.log(`Fetching URL: https://api.nnsvip.sbs/?url=${encodeURIComponent(data.link)}`);
+    const response = await fetch(`https://api.nnsvip.sbs/?url=${encodeURIComponent(data.link)}`);
+    console.log('Response:', response);
+
+    if (!response.ok) {
+      if (response.status === 500) {
+        ElMessage.error({ message: '服务器内部错误, 请稍后再试!!!' });
+      } else {
+        ElMessage.error({ message: `请求失败, 状态码: ${response.status}` });
+      }
+      return;
+    }
+
+    const result = await response.json();
+    console.log('Result:', result);
+
+    if (result.code === 200 && result.url) {
+      data.options.src = result.url;
+      console.log('Setting video source to:', result.url);
+      const videoElement = document.getElementsByTagName("video")[0];
+      if (videoElement) {
+        videoElement.pause(); // 先暂停当前视频
+        videoElement.currentTime = 0; // 重置播放时间
+        videoElement.load(); // 确保视频元素重新加载
+
+        // 监听加载完成事件
+        videoElement.addEventListener('loadedmetadata', () => {
+          videoElement.play().then(() => {
+            console.log('Video started playing');
+          }).catch(error => {
+            console.error('Error playing video:', error);
+            ElMessage.error({ message: '视频无法播放, 请检查网络或视频格式!!!' });
+          });
+        });
+      } else {
+        console.error('Video element not found');
+        ElMessage.error({ message: '视频元素未找到, 请检查代码!!!' });
+      }
+    } else {
+      ElMessage.error({ message: '解析失败, 请稍后再试!!!' });
+    }
+  } catch (error) {
+    console.error('Error fetching and playing:', error);
+    ElMessage.error({ message: '网络错误, 请检查网络连接!!!' });
+  }
+}
 </script>
 
 <style scoped>
 :deep(.el-main) {
-  padding-bottom: 0!important;
+  padding-bottom: 0 !important;
 }
+
 .container {
   margin: 0 auto;
-  height: 80%
+  height: 80%;
 }
 
 .player_header {
@@ -126,17 +171,19 @@ const play = () => {
   margin: 0 auto;
   display: flex;
 }
+
 .cus-input {
   font-size: 16px;
   width: 100%;
-  padding: 0  40px;
+  padding: 0 40px;
   border: none;
   outline-style: none;
   border-radius: 16px 0 0 16px;
   min-height: 40px;
-  background: rgba(255,255,255,0.8);
+  background: rgba(255, 255, 255, 0.8);
 }
-.cus-input:focus{
+
+.cus-input:focus {
   border: 0;
 }
 
@@ -145,17 +192,17 @@ const play = () => {
   font-size: 16px;
   border-radius: 0 16px 16px 0;
   background: deeppink;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255, 255, 255, 0.8);
   outline-style: none;
 }
+
 .icon-play:hover {
   background: hotpink;
 }
 
-/*播放器样式.*/
+/* 播放器样式 */
 .player_area {
   width: 100%;
-  /*height: 700px;*/
   margin: 0;
   padding-bottom: 56.25% !important;
   position: relative;
@@ -184,7 +231,7 @@ const play = () => {
   background: rgba(0, 0, 0, 0.32);
 }
 
-/*取消video被选中的白边*/
+/* 取消video被选中的白边 */
 :deep(video:focus) {
   border: none !important;
   outline: none;
@@ -203,7 +250,7 @@ const play = () => {
   border-radius: 6px;
 }
 
-/*进度条配色*/
+/* 进度条配色 */
 :deep(.video-js .vjs-load-progress div) {
   background: rgba(255, 255, 255, 0.55) !important;
 }
@@ -215,5 +262,4 @@ const play = () => {
 :deep(.video-js .vjs-slider) {
   background-color: hsla(0, 0%, 100%, .2);
 }
-
 </style>
