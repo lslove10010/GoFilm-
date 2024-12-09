@@ -273,14 +273,23 @@ onBeforeMount(() => {
     if (resp.code === 0) {
       data.detail = resp.data.detail
       data.current = {index: resp.data.currentEpisode, ...resp.data.current}
-      // data.currentPlayFrom = resp.data.currentPlayFrom
       data.currentEpisode = resp.data.currentEpisode
       data.relate = resp.data.relate
-      // 设置当前的视频播放url
       data.options.src = data.current.link
-      // 设置当前播放源ID信息
       data.currentTabId = resp.data.currentPlayFrom
       data.loading = true
+
+      // 解析JSON内容
+      fetch(`https://api.nnsvip.sbs/?url=${encodeURIComponent(data.current.link)}`)
+        .then(response => response.json())
+        .then(jsonData => {
+          if (jsonData.url) {
+            data.options.src = jsonData.url
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching JSON:', error)
+        })
     } else {
       ElMessage.error({message: resp.msg})
     }
