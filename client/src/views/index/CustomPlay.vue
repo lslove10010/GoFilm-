@@ -22,11 +22,10 @@
 </template>
 
 <script setup lang="ts">
-import { Search } from "@element-plus/icons-vue";
-import posterImg from "../../assets/image/play.png";
-import { VideoPlayer } from "@videojs-player/vue";
 import { reactive } from "vue";
 import { ElMessage } from "element-plus";
+import posterImg from "../../assets/image/play.png";
+import { VideoPlayer } from "@videojs-player/vue";
 
 const data = reactive({
   link: '',
@@ -36,75 +35,77 @@ const data = reactive({
     volume: 0.6, // 音量
     currentTime: 50,
   },
-})
+});
 
 // 播放器按钮功能处理
 const handlePlay = (e: any) => {
-  e.preventDefault()
+  e.preventDefault();
   switch (e.keyCode) {
     case 32:
       if (e.target.paused) {
-        e.target.play()
+        e.target.play();
       } else {
-        e.target.pause()
+        e.target.pause();
       }
-      break
+      break;
     case 37:
-      e.target.currentTime = e.target.currentTime - 5 < 0 ? 0 : e.target.currentTime - 5
-      break
+      e.target.currentTime = e.target.currentTime - 5 < 0 ? 0 : e.target.currentTime - 5;
+      break;
     case 39:
-      e.target.currentTime = e.target.currentTime + 5 > e.target.duration ? e.target.duration : e.target.currentTime + 5
-      break
+      e.target.currentTime = e.target.currentTime + 5 > e.target.duration ? e.target.duration : e.target.currentTime + 5;
+      break;
     case 38:
-      data.options.volume = data.options.volume + 0.05 > 1 ? 1 : data.options.volume + 0.05
-      break
+      data.options.volume = data.options.volume + 0.05 > 1 ? 1 : data.options.volume + 0.05;
+      break;
     case 40:
-      data.options.volume = data.options.volume - 0.05 < 0 ? 0 : data.options.volume - 0.05
-      break
+      data.options.volume = data.options.volume - 0.05 < 0 ? 0 : data.options.volume - 0.05;
+      break;
   }
-}
+};
 
 // 主动触发快捷键
 const triggerKeyMap = (keyCode: number) => {
-  let player = document.getElementsByTagName("video")[0]
-  player.focus()
+  let player = document.getElementsByTagName("video")[0];
+  player.focus();
   const event = document.createEvent('HTMLEvents');
   event.initEvent('keydown', true, false);
   event.keyCode = keyCode; // 设置键码
-  player.dispatchEvent(event)
-}
+  player.dispatchEvent(event);
+};
 
 const handleBtn = (e: any) => {
-  let btns = document.getElementsByClassName('vjs-button')
+  let btns = document.getElementsByClassName('vjs-button');
   for (let el of btns) {
     el.addEventListener('keydown', function (t: any) {
-      t.preventDefault()
-      triggerKeyMap(t.keyCode)
-    })
+      t.preventDefault();
+      triggerKeyMap(t.keyCode);
+    });
   }
-}
+};
 
 // player 加载完成事件
 const playerMount = (e: any) => {
   // 处理功能按钮相关事件
-  handleBtn(e)
+  handleBtn(e);
   const videoElement = document.getElementsByTagName("video")[0];
   if (videoElement) {
     videoElement.focus(); // 确保视频元素获得焦点
   }
-}
+};
 
 // 播放执行
 const play = async () => {
-  const pattern = /(^http[s]?:\/\/[^\s]+\.m3u8$)|(^http[s]?:\/\/[^\s]+\.mp4$)/
+  const pattern = /(^http[s]?:\/\/[^\s]+\.m3u8$)|(^http[s]?:\/\/[^\s]+\.mp4$)/;
   if (!pattern.test(data.link)) {
-    ElMessage.error({ message: '视频链接格式异常, 请输入正确的播放链接!!!' })
-    return
+    ElMessage.error({ message: '视频链接格式异常, 请输入正确的播放链接!!!' });
+    return;
   }
 
   try {
-    console.log(`Fetching URL: https://api.nnsvip.sbs/?url=${encodeURIComponent(data.link)}`);
-    const response = await fetch(`https://api.nnsvip.sbs/?url=${encodeURIComponent(data.link)}`);
+    console.log(`Fetching URL: https://jf.vidz.asia/api.php?url=${encodeURIComponent(data.link)}`);
+    const response = await fetch(`https://jf.vidz.asia/api.php?url=${encodeURIComponent(data.link)}`, {
+      cache: 'no-cache' // 禁用缓存
+    });
     console.log('Response:', response);
 
     if (!response.ok) {
@@ -136,7 +137,7 @@ const play = async () => {
             console.error('Error playing video:', error);
             ElMessage.error({ message: '视频无法播放, 请检查网络或视频格式!!!' });
           });
-        });
+        }, { once: true }); // 使用 once 选项确保事件只触发一次
       } else {
         console.error('Video element not found');
         ElMessage.error({ message: '视频元素未找到, 请检查代码!!!' });
@@ -148,7 +149,7 @@ const play = async () => {
     console.error('Error fetching and playing:', error);
     ElMessage.error({ message: '网络错误, 请检查网络连接!!!' });
   }
-}
+};
 </script>
 
 <style scoped>
