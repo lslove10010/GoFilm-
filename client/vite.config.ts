@@ -12,7 +12,7 @@ export default defineConfig({
         port: 3600,
         proxy: {
             "/api": {
-                target: `http://128.204.223.46:35836`,
+                target: `https://44faee08-d51b-4257-a793-db627f975d62-00-r9ir3v1qf6fc.pike.replit.dev`,
                 // target: `http://1.94.30.26:3601`,
                 changeOrigin: true, // 允许跨域
                 rewrite: path => path.replace(/^\/api/, '')
