@@ -12,7 +12,7 @@ export default defineConfig({
         port: 3600,
         proxy: {
             "/api": {
-                target: `https://ff3cab95-d148-46c7-abc3-0abfc5a0593d-00-a7beyyfbotbg.sisko.replit.dev:3001`,
+                target: `https://film-server.nanning.workers.dev`,
                 // target: `http://1.94.30.26:3601`,
                 changeOrigin: true, // 允许跨域
                 rewrite: path => path.replace(/^\/api/, '')
